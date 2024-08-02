@@ -67,8 +67,8 @@ class RendererHTML:
         for i, token in enumerate(tokens):
 
             if token.type == "inline":
-                if token.children:
-                    result += self.renderInline(token.children, options, env)
+                assert token.children is not None
+                result += self.renderInline(token.children, options, env)
             elif token.type in self.rules:
                 result += self.rules[token.type](tokens, i, options, env)
             else:
@@ -190,8 +190,8 @@ class RendererHTML:
             if token.type == "text":
                 result += token.content
             elif token.type == "image":
-                if token.children:
-                    result += self.renderInlineAsText(token.children, options, env)
+                assert token.children is not None
+                result += self.renderInlineAsText(token.children, options, env)
             elif token.type == "softbreak":
                 result += "\n"
 
@@ -289,10 +289,14 @@ class RendererHTML:
 
         # "alt" attr MUST be set, even if empty. Because it's mandatory and
         # should be placed on proper position for tests.
-        if token.children:
-            token.attrSet("alt", self.renderInlineAsText(token.children, options, env))
-        else:
-            token.attrSet("alt", "")
+
+        assert (
+            token.attrs and "alt" in token.attrs
+        ), '"image" token\'s attrs must contain `alt`'
+
+        # Replace content with actual value
+
+        token.attrSet("alt", self.renderInlineAsText(token.children, options, env))
 
         return self.renderToken(tokens, idx, options, env)
 
